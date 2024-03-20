@@ -1,0 +1,88 @@
+import tkinter as tk
+from tkinter import filedialog
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import numpy as np
+import pandas as pd
+import threading
+import time
+
+class RealTimePlotApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Real Time Plot App")
+
+        # Inicjalizacja figury i osi wykresu
+        self.figure, self.ax = plt.subplots()
+        self.canvas = FigureCanvasTkAgg(self.figure, master=self.root)
+        self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+        # Tworzenie paska narzędziowego
+        self.toolbar = tk.Frame(self.root)
+        self.toolbar.pack(side=tk.BOTTOM)
+
+        # Przycisk do wczytywania danych
+        self.btn_load = tk.Button(self.toolbar, text="Load Data", command=self.load_data)
+        self.btn_load.pack(side=tk.LEFT)
+
+        # Przycisk do pauzowania i wznowienia rysowania
+        self.btn_pause_resume = tk.Button(self.toolbar, text="Pause", command=self.pause_resume)
+        self.btn_pause_resume.pack(side=tk.LEFT)
+
+        # Zmienna do przechowywania informacji o pauzie
+        self.is_paused = False
+
+        # Dane wczytane z pliku
+        self.data = None
+        self.x = []
+        self.y = []
+        self.plot_data()
+
+    def load_data(self):
+        # Funkcja wczytująca dane z pliku tekstowego
+        file_path = filedialog.askopenfilename(filetypes=[("Text files", "*.txt")])
+        if file_path:
+            self.data = pd.read_csv(file_path, delimiter='\t', header=None)
+            self.plot_data()
+
+    def plot_data(self):
+        # Funkcja generująca wykres na podstawie wczytanych danych
+        if self.data is not None:
+            self.x = self.data[0].values
+            self.y = self.data[1].values
+            self.ax.clear()
+            self.ax.plot(self.x, self.y, 'b-')
+            self.canvas.draw()
+
+    def update_plot(self):
+        # Wątek odpowiedzialny za aktualizację wykresu w czasie rzeczywistym
+        while True:
+            if not self.is_paused and self.data is not None:
+                self.x = np.roll(self.x, -1)
+                self.y = np.roll(self.y, -1)
+                self.y[-1] = self.y[-2]  # Replacing oldest value with the previous one
+                self.ax.clear()
+                self.ax.plot(self.x, self.y, 'b-')
+                self.canvas.draw()
+            time.sleep(1)  # Adjust refresh rate here
+
+    def pause_resume(self):
+        # Funkcja obsługująca pauzowanie i wznowienie rysowania wykresu
+        if self.is_paused:
+            self.is_paused = False
+            self.btn_pause_resume.config(text="Pause")
+        else:
+            self.is_paused = True
+            self.btn_pause_resume.config(text="Resume")
+
+    def start_update_thread(self):
+        # Funkcja uruchamiająca wątek do aktualizacji wykresu
+        update_thread = threading.Thread(target=self.update_plot)
+        update_thread.daemon = True
+        update_thread.start()
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = RealTimePlotApp(root)
+    app.start_update_thread()
+    root.mainloop()
