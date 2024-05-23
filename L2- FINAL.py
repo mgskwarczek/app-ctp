@@ -1,9 +1,38 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+from matplotlib.backends._backend_tk import NavigationToolbar2Tk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import tkinter as tk
 from tkinter import filedialog, messagebox
+
+class RealTimePlotApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Real-Time Plot App")
+
+        self.fig, self.ax = plt.subplots()
+        self.line1, = self.ax.plot([], [], label='V1')
+        self.line2, = self.ax.plot([], [], label='V2')
+        self.ax.legend()
+
+        self.pause = False
+
+        self.canvas = FigureCanvasTkAgg(self.fig, master=self.root)
+        self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+        self.toolbar = NavigationToolbar2Tk(self.canvas, self.root)
+        self.toolbar.update()
+        self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+        self.pause_button = tk.Button(self.root, text="Pause", command=self.toggle_pause)
+        self.pause_button.pack()
+
+        self.load_button = tk.Button(self.root, text="Load File", command=self.load_file)
+        self.load_button.pack()
+
+        self.animation = FuncAnimation(self.fig, self.update_plot, interval=100)
+
 
 # Funkcja do generowania sygnału WF
 def generate_signal(U, a):
