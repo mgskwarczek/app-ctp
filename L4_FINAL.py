@@ -19,8 +19,8 @@ class RealTimePlotAppL4:
 
         # Create plot
         self.fig, self.ax = plt.subplots()
-        self.ax.set_xlabel('Time')
-        self.ax.set_ylabel('Value')
+        self.ax.set_xlabel('Time[s]')
+        self.ax.set_ylabel('Ni [obr/min]')
 
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.root)
         self.canvas.draw()
@@ -97,10 +97,10 @@ class RealTimePlotAppL4:
         self.ax.clear()  # Clear the previous plot
         if len(self.data[0]) >= 5:  # Check if there are at least 5 series
             series = [point[4] for point in self.data[:index]]  # 5th series
-            self.ax.plot(self.time[:index], series, label='Series 5', color='b')
+            self.ax.plot(self.time[:index], series, label='Ni', color='b')
 
-        self.ax.set_xlabel('Time')
-        self.ax.set_ylabel('Value')
+        self.ax.set_xlabel('Time[s]')
+        self.ax.set_ylabel('Ni[obr/min]')
         self.ax.legend(loc='upper left')
 
         current_time = self.time[index - 1]
@@ -177,9 +177,9 @@ class RealTimePlotAppL4:
             messagebox.showerror("Error", "Invalid range value. Please enter a valid number.")
 
     def back_to_main(self):
-        self.root.destroy()  # Close the current window
-        root_main = tk.Tk()  # Create a new Tkinter root window
-        MainApp(root_main)  # Launch the main application
+        self.root.destroy()
+        root_main = tk.Tk()
+        MainApp(root_main)
         root_main.mainloop()
 
     def on_closing(self):
