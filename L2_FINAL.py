@@ -6,7 +6,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import tkinter as tk
 from tkinter import filedialog, messagebox
 
-class RealTimePlotApp:
+class RealTimePlotAppL2:
     def __init__(self, root):
         self.root = root
         self.root.title("Real-Time Plot App")
