@@ -15,10 +15,10 @@ class DataPlotterApp:
         self.load_button = tk.Button(master, text="Load Excel File", command=self.load_data)
         self.load_button.pack()
 
-        self.plot_button1 = tk.Button(master, text="Plot Column 4", command=lambda: self.setup_animation(3))
+        self.plot_button1 = tk.Button(master, text="Plot x(m)", command=lambda: self.setup_animation(3, 'x(m)'))
         self.plot_button1.pack()
 
-        self.plot_button2 = tk.Button(master, text="Plot Column 5", command=lambda: self.setup_animation(4))
+        self.plot_button2 = tk.Button(master, text="Plot V", command=lambda: self.setup_animation(4, 'V'))
         self.plot_button2.pack()
 
         # Slider do regulacji prędkości animacji
@@ -49,24 +49,24 @@ class DataPlotterApp:
             self.plot_button1.config(state="normal")
             self.plot_button2.config(state="normal")
 
-    def setup_animation(self, column_index):
+    def setup_animation(self, column_index, y_label):
         if hasattr(self, 'data'):
             if self.ani is not None:
                 self.ani.event_source.stop()  # Zatrzymaj bieżącą animację
             self.xdata, self.ydata = [], []  # Reset danych wykresu
-            self.animate_data(column_index)
+            self.animate_data(column_index, y_label)
         else:
             print("Please load the data first.")
 
-    def animate_data(self, column_index):
+    def animate_data(self, column_index, y_label):
         self.ax.clear()
         self.line, = self.ax.plot([], [], lw=2)  # Ponowna inicjalizacja linii w każdym nowym wywołaniu
         y_min = self.data.iloc[:, column_index].min()
         y_max = self.data.iloc[:, column_index].max()
         self.ax.set_ylim(y_min - (y_max - y_min) * 0.1, y_max + (y_max - y_min) * 0.1)  # Zwiększony zakres osi Y
-        self.ax.set_title(f'Animated Plot of Column {column_index + 1}')
-        self.ax.set_xlabel('Index')
-        self.ax.set_ylabel('Value')
+        self.ax.set_title(f'Animated Plot of {y_label}')
+        self.ax.set_ylabel(y_label)
+        self.ax.get_xaxis().set_visible(False)  # Hide X-axis
 
         def init():
             self.line.set_data([], [])
