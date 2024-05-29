@@ -1,10 +1,10 @@
+# L4_FINAL.py
+
 import tkinter as tk
-from L1L2_main import MainApp  # Adjust the import statement to the correct module name
 import matplotlib.pyplot as plt
 from tkinter import filedialog
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import tkinter.messagebox as messagebox
-
 
 class RealTimePlotAppL4:
     def __init__(self, root):
@@ -178,9 +178,12 @@ class RealTimePlotAppL4:
 
     def back_to_main(self):
         self.root.destroy()
-        root_main = tk.Tk()
-        MainApp(root_main)
-        root_main.mainloop()
+        # Usunięto referencję do MainApp
 
     def on_closing(self):
         self.root.quit()
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = RealTimePlotAppL4(root)
+    root.mainloop()

@@ -1,3 +1,5 @@
+# L3_FINAL.py
+
 import tkinter as tk
 from tkinter import filedialog
 import pandas as pd
@@ -88,10 +90,7 @@ class DataPlotterApp:
 
     def back_to_main(self):
         self.master.destroy()
-        import L1L2_main  # Import here to avoid circular import
-        root_main = tk.Tk()
-        L1L2_main.MainApp(root_main)
-        root_main.mainloop()
+        # Usunięto referencję do L1L2_main
 
 if __name__ == "__main__":
     root = tk.Tk()

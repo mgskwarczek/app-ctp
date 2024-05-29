@@ -1,3 +1,5 @@
+# L2_FINAL.py
+
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
@@ -11,112 +13,80 @@ class RealTimePlotAppL2:
         self.root = root
         self.root.title("Real-Time Plot App")
 
+        self.frame_controls = tk.Frame(self.root)
+        self.frame_controls.pack(side=tk.TOP, fill=tk.X, padx=10, pady=10)
+
+        self.frame_plot = tk.Frame(self.root)
+        self.frame_plot.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        self.label_max_voltage = tk.Label(self.frame_controls, text='Enter the maximum voltage (0-10V):')
+        self.label_max_voltage.grid(row=0, column=0, padx=5, pady=5)
+
+        self.entry_max_voltage = tk.Entry(self.frame_controls)
+        self.entry_max_voltage.grid(row=0, column=1, padx=5, pady=5)
+
+        self.label_max_displacement = tk.Label(self.frame_controls, text='Enter the maximum displacement (0-0.5m):')
+        self.label_max_displacement.grid(row=1, column=0, padx=5, pady=5)
+
+        self.entry_max_displacement = tk.Entry(self.frame_controls)
+        self.entry_max_displacement.grid(row=1, column=1, padx=5, pady=5)
+
+        self.select_button = tk.Button(self.frame_controls, text='Select File', command=self.select_file)
+        self.select_button.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+
         self.fig, self.ax = plt.subplots()
-        self.line1, = self.ax.plot([], [], label='V1')
-        self.line2, = self.ax.plot([], [], label='V2')
-        self.ax.legend()
+        self.canvas = FigureCanvasTkAgg(self.fig, master=self.frame_plot)
+        self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-        self.pause = False
-
-        self.canvas = FigureCanvasTkAgg(self.fig, master=self.root)
-        self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-
-        self.toolbar = NavigationToolbar2Tk(self.canvas, self.root)
+        self.toolbar = NavigationToolbar2Tk(self.canvas, self.frame_plot)
         self.toolbar.update()
-        self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+        self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-        self.pause_button = tk.Button(self.root, text="Pause", command=self.toggle_pause)
-        self.pause_button.pack()
+        self.back_button = tk.Button(self.frame_plot, text="Wstecz", command=self.root.destroy)
+        self.back_button.pack(side=tk.BOTTOM, pady=10)
 
-        self.load_button = tk.Button(self.root, text="Load File", command=self.load_file)
-        self.load_button.pack()
+    def select_file(self):
+        try:
+            max_voltage = float(self.entry_max_voltage.get())
+            max_displacement = float(self.entry_max_displacement.get())
 
-        self.animation = FuncAnimation(self.fig, self.update_plot, interval=100)
+            if max_voltage <= 0 or max_displacement <= 0:
+                raise ValueError("Values must be positive")
 
+            a = max_displacement / max_voltage
 
-# Funkcja do generowania sygnału WF
+            filename = filedialog.askopenfilename(filetypes=[('Excel files', '*.xlsx')])
+            if not filename:
+                return
+
+            time, U = load_data(filename)
+            self.ax.clear()
+            self.ax.set_xlim(0, 20)
+            self.ax.set_ylim(0, max_displacement)
+            self.ani = FuncAnimation(self.fig, update_plot, frames=len(time), fargs=(time, U, a, self.ax), interval=20, repeat=False)
+            self.canvas.draw()
+
+        except ValueError as ve:
+            messagebox.showerror("Error", f"Invalid input: {ve}")
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred: {e}")
+
 def generate_signal(U, a):
     return a * U
 
-
-# Funkcja do wczytywania danych z pliku .xlsx
 def load_data(filename):
-    df = pd.read_excel(filename, header=None)  # Wczytaj dane bez uwzględniania nagłówków kolumn
-    return df.iloc[:, 0], df.iloc[:, 1]  # Wczytaj pierwszą i drugą kolumnę
+    df = pd.read_excel(filename, header=None)
+    return df.iloc[:, 0], df.iloc[:, 1]
 
-
-# Funkcja do inicjalizacji wykresu
-def init_plot(max_displacement):
-    fig, ax = plt.subplots()
-    ax.set_xlabel('Time')
-    ax.set_ylabel('WF(t)')
-    ax.set_xlim(0, 20)  # Ustaw zakres osi x od 0 do 20 sekund
-    ax.set_ylim(0, max_displacement)  # Ustaw zakres osi y zgodnie z podanym zakresem przesunięcia
-    return fig, ax
-
-
-# Funkcja do aktualizacji wykresu
 def update_plot(frame, time, U, a, ax):
     ax.clear()
     ax.set_xlabel('Time')
     ax.set_ylabel('WF(t)')
-
-    ax.set_xlim(max(0, time[frame] - 20), max(20, time[frame]))  # Przesuwamy okno, aby wyświetlić 20 ostatnich sekund
-
-    # Rysowanie wykresu
+    ax.set_xlim(max(0, time[frame] - 20), max(20, time[frame]))
     ax.plot(time[:frame], generate_signal(U[:frame], a), color='blue')
 
-
-# Funkcja do obsługi przycisku wyboru pliku
-def select_file():
-    try:
-        max_voltage = float(entry_max_voltage.get())  # Pobierz maksymalne napięcie z pola Entry i konwertuj na float
-        max_displacement = float(
-            entry_max_displacement.get())  # Pobierz maksymalne wysunięcie z pola Entry i konwertuj na float
-
-        if max_voltage <= 0 or max_displacement <= 0:
-            raise ValueError("Values must be positive")
-
-        a = max_displacement / max_voltage  # Oblicz współczynnik 'a'
-
-        filename = filedialog.askopenfilename(filetypes=[('Excel files', '*.xlsx')])
-        if not filename:
-            return
-
-        time, U = load_data(filename)
-        fig, ax = init_plot(max_displacement)
-
-        canvas = FigureCanvasTkAgg(fig, master=root)  # Utwórz canvas z wykresem
-        canvas.get_tk_widget().pack()
-
-        ani = FuncAnimation(fig, update_plot, frames=len(time), fargs=(time, U, a, ax), interval=20, repeat=False)
-        canvas.draw()
-
-    except ValueError as ve:
-        messagebox.showerror("Error", f"Invalid input: {ve}")
-    except Exception as e:
-        messagebox.showerror("Error", f"An error occurred: {e}")
-
-
-# Interfejs użytkownika
-root = tk.Tk()
-root.title('Real-time WF(t) Plot')
-
-label_max_voltage = tk.Label(root, text='Enter the maximum voltage (0-10V):')
-label_max_voltage.pack()
-
-entry_max_voltage = tk.Entry(root)
-entry_max_voltage.pack()
-
-label_max_displacement = tk.Label(root, text='Enter the maximum displacement (0-0.5m):')
-label_max_displacement.pack()
-
-entry_max_displacement = tk.Entry(root)
-entry_max_displacement.pack()
-
-select_button = tk.Button(root, text='Select File', command=select_file)
-select_button.pack()
-
-root.mainloop()
-
-
+# Kod inicjalizacyjny aplikacji
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = RealTimePlotAppL2(root)
+    root.mainloop()
